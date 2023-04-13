@@ -1,5 +1,6 @@
 package ru.kpfu.itis.controller;
 
+import lombok.*;
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.web.bind.annotation.*;
 import ru.kpfu.itis.dto.*;

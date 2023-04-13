@@ -1,6 +1,7 @@
 package ru.kpfu.itis.controller;
 
 import lombok.*;
+import org.springframework.data.repository.query.*;
 import org.springframework.security.core.*;
 import org.springframework.security.core.context.*;
 import org.springframework.stereotype.*;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.kpfu.itis.dto.*;
 import ru.kpfu.itis.exceptions.*;
 import ru.kpfu.itis.security.*;
+import ru.kpfu.itis.service.impl.*;
 
 import javax.servlet.http.*;
 import javax.validation.*;
@@ -19,6 +21,13 @@ import javax.validation.*;
 public class RegistrationController {
 
     private CustomReaderDetailsService readerDetailsService;
+    private ReaderServiceImpl readerService;
+
+    @GetMapping("/home")
+    public String home(HttpServletRequest httpServletRequest) {
+        String currentPrincipalName = httpServletRequest.getUserPrincipal().getName();
+        return "home";
+    }
 
     @GetMapping("/sign_up")
     public String sign_up(Model model) {
@@ -31,13 +40,15 @@ public class RegistrationController {
     public String createReader(
             @ModelAttribute("reader") @Valid ReaderRequestDto reader,
             BindingResult bindingResult, Model model,
-            HttpServletResponse response) {
+            HttpServletResponse response, HttpServletRequest request) {
 
         if (bindingResult.hasErrors()) {
             return "sign_up";
         }
 
         try {
+            String url = request.getRequestURL().toString().replace(request.getServletPath(), "");
+            readerService.create(reader, url);
             readerDetailsService.saveReader(reader);
 
             Cookie cookie = new Cookie("email", reader.getEmail());
@@ -57,5 +68,14 @@ public class RegistrationController {
             request.getSession().invalidate();
         }
         return "redirect:/";
+    }
+
+    @GetMapping("/verification")
+    public String verify(@Param("code") String code) {
+        if (readerService.verify(code)) {
+            return "verification_success";
+        } else {
+            return "verification_failed";
+        }
     }
 }
